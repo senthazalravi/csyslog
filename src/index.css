@@ -1,96 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* CITADEL SYSLOG AI — Tactical Command Center Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core backgrounds - deep tactical darks */
+    --background: 220 20% 6%;
+    --foreground: 210 20% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Cards - slightly elevated surfaces */
+    --card: 220 18% 10%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Popover surfaces */
+    --popover: 220 20% 8%;
+    --popover-foreground: 210 20% 92%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Tactical cyan */
+    --primary: 185 80% 50%;
+    --primary-foreground: 220 20% 6%;
+    --primary-glow: 185 80% 50%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Steel gray */
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 210 20% 85%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted elements */
+    --muted: 220 15% 15%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Electric blue */
+    --accent: 200 85% 55%;
+    --accent-foreground: 220 20% 6%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Status colors */
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --success: 145 70% 45%;
+    --success-foreground: 220 20% 6%;
+    
+    --warning: 38 92% 55%;
+    --warning-foreground: 220 20% 6%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --info: 200 85% 55%;
+    --info-foreground: 220 20% 6%;
+
+    /* Severity levels */
+    --critical: 0 85% 55%;
+    --high: 25 95% 55%;
+    --medium: 38 92% 55%;
+    --low: 200 85% 55%;
+
+    /* Borders and inputs */
+    --border: 220 15% 18%;
+    --input: 220 15% 15%;
+    --ring: 185 80% 50%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Glows and effects */
+    --glow-primary: 0 0 20px hsl(185 80% 50% / 0.4);
+    --glow-success: 0 0 20px hsl(145 70% 45% / 0.4);
+    --glow-warning: 0 0 20px hsl(38 92% 55% / 0.4);
+    --glow-critical: 0 0 20px hsl(0 85% 55% / 0.4);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 185 80% 50%;
+    --sidebar-primary-foreground: 220 20% 6%;
+    --sidebar-accent: 220 15% 14%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 15% 15%;
+    --sidebar-ring: 185 80% 50%;
   }
 
+  /* Force dark mode always */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 220 20% 6%;
+    --foreground: 210 20% 92%;
   }
 }
 
@@ -99,7 +92,239 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    @apply dark;
   }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Monospace for data */
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+}
+
+@layer components {
+  /* Tactical panel with subtle glow */
+  .tactical-panel {
+    @apply bg-card border border-border rounded-lg;
+    background: linear-gradient(
+      135deg,
+      hsl(220 18% 10%) 0%,
+      hsl(220 20% 8%) 100%
+    );
+    box-shadow: 
+      0 4px 24px -4px hsl(220 20% 0% / 0.5),
+      inset 0 1px 0 hsl(220 15% 20% / 0.3);
+  }
+
+  /* Glowing border effect */
+  .glow-border {
+    @apply relative;
+    box-shadow: var(--glow-primary);
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .glow-border-success {
+    box-shadow: var(--glow-success);
+    border-color: hsl(var(--success) / 0.5);
+  }
+
+  .glow-border-warning {
+    box-shadow: var(--glow-warning);
+    border-color: hsl(var(--warning) / 0.5);
+  }
+
+  .glow-border-critical {
+    box-shadow: var(--glow-critical);
+    border-color: hsl(var(--critical) / 0.5);
+  }
+
+  /* Grid pattern overlay */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(hsl(220 15% 15% / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 15% 15% / 0.3) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Status indicators */
+  .status-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .status-dot-ok {
+    background-color: hsl(var(--success));
+    box-shadow: 0 0 8px hsl(var(--success));
+  }
+
+  .status-dot-warning {
+    background-color: hsl(var(--warning));
+    box-shadow: 0 0 8px hsl(var(--warning));
+  }
+
+  .status-dot-critical {
+    background-color: hsl(var(--critical));
+    box-shadow: 0 0 8px hsl(var(--critical));
+    animation: pulse-critical 1s ease-in-out infinite;
+  }
+
+  /* Severity badges */
+  .severity-critical {
+    background-color: hsl(var(--critical) / 0.2);
+    color: hsl(var(--critical));
+    border: 1px solid hsl(var(--critical) / 0.3);
+  }
+
+  .severity-high {
+    background-color: hsl(var(--high) / 0.2);
+    color: hsl(var(--high));
+    border: 1px solid hsl(var(--high) / 0.3);
+  }
+
+  .severity-medium {
+    background-color: hsl(var(--warning) / 0.2);
+    color: hsl(var(--warning));
+    border: 1px solid hsl(var(--warning) / 0.3);
+  }
+
+  .severity-low {
+    background-color: hsl(var(--info) / 0.2);
+    color: hsl(var(--info));
+    border: 1px solid hsl(var(--info) / 0.3);
+  }
+
+  /* Log line severity */
+  .log-critical {
+    border-left: 2px solid hsl(var(--critical));
+    background-color: hsl(var(--critical) / 0.05);
+  }
+
+  .log-warning {
+    border-left: 2px solid hsl(var(--warning));
+    background-color: hsl(var(--warning) / 0.05);
+  }
+
+  .log-info {
+    border-left: 2px solid hsl(var(--info));
+    background-color: hsl(var(--info) / 0.05);
+  }
+
+  .log-success {
+    border-left: 2px solid hsl(var(--success));
+    background-color: hsl(var(--success) / 0.05);
+  }
+
+  /* Data visualization */
+  .metric-value {
+    @apply font-mono text-2xl font-semibold tracking-tight;
+    text-shadow: 0 0 20px currentColor;
+  }
+
+  /* Scrollbar styling */
+  .tactical-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .tactical-scroll::-webkit-scrollbar-track {
+    @apply bg-muted/50 rounded;
+  }
+
+  .tactical-scroll::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded;
+  }
+
+  .tactical-scroll::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer utilities {
+  /* Text glow effects */
+  .text-glow-primary {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.6);
+  }
+
+  .text-glow-success {
+    text-shadow: 0 0 10px hsl(var(--success) / 0.6);
+  }
+
+  .text-glow-warning {
+    text-shadow: 0 0 10px hsl(var(--warning) / 0.6);
+  }
+
+  .text-glow-critical {
+    text-shadow: 0 0 10px hsl(var(--critical) / 0.6);
+  }
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+/* Custom scrollbar for the entire app */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(220 20% 8%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(220 15% 25%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 15% 35%);
 }
