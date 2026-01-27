@@ -22,16 +22,28 @@ const providerIcons: Record<string, typeof Brain> = {
 };
 
 export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
-  const [settings, setSettings] = useLocalStorage<AISettings>("citadel-ai-settings", defaultAISettings);
+  const [savedSettings, setSavedSettings] = useLocalStorage<AISettings>("citadel-ai-settings", defaultAISettings);
+  const [settings, setSettings] = useState<AISettings>(savedSettings);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleSave = () => {
+    setSavedSettings(settings);
+    setHasChanges(false);
+  };
+
+  const updateSettings = (newSettings: AISettings) => {
+    setSettings(newSettings);
+    setHasChanges(true);
+  };
 
   const toggleShowKey = (providerId: string) => {
     setShowKeys(prev => ({ ...prev, [providerId]: !prev[providerId] }));
   };
 
   const updateProvider = (providerId: string, updates: Partial<AIProvider>) => {
-    setSettings({
+    updateSettings({
       ...settings,
       providers: settings.providers.map(p =>
         p.id === providerId ? { ...p, ...updates } : p
@@ -40,7 +52,7 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
   };
 
   const selectProvider = (providerId: string) => {
-    setSettings({ ...settings, selectedProvider: providerId });
+    updateSettings({ ...settings, selectedProvider: providerId });
   };
 
   const getActiveProviders = () => settings.providers.filter(p => p.enabled && p.apiKey);
@@ -210,7 +222,15 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
 
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
           <Button variant="ghost" onClick={() => setOpen(false)}>
-            Close
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={!hasChanges}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Check className="w-4 h-4 mr-2" />
+            Save Settings
           </Button>
         </div>
       </DialogContent>
