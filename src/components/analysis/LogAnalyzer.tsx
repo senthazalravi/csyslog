@@ -4,139 +4,26 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LogUpload } from "@/components/upload/LogUpload";
 import { AnalysisReport } from "./AnalysisReport";
+import { AnalysisProgress } from "./AnalysisProgress";
 import { LogAnalysis, AISettings, defaultAISettings } from "@/types/ai-settings";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { testConnection, analyzeWithAI } from "@/lib/ai-providers";
 
 export const LogAnalyzer = () => {
   const [settings] = useLocalStorage<AISettings>("citadel-ai-settings", defaultAISettings);
   const [analyses, setAnalyses] = useState<LogAnalysis[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<LogAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStage, setAnalysisStage] = useState("");
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisError, setAnalysisError] = useState<string | undefined>();
 
   const getActiveProvider = () => {
     return settings.providers.find(
       p => p.id === settings.selectedProvider && p.enabled && (p.apiKey || p.id === "ollama")
     );
-  };
-
-  const analyzeWithAI = async (content: string, provider: typeof settings.providers[0]): Promise<Partial<LogAnalysis>> => {
-    // Build the analysis prompt
-    const systemPrompt = `You are a security and systems log analyst. Analyze the provided log content and return a JSON object with:
-- summary: A brief 2-3 sentence summary of the log
-- severityBreakdown: Object with counts for critical, warning, info, success
-- insights: Array of 3-5 key insights about patterns, anomalies, or issues
-- recommendations: Array of 2-4 actionable recommendations
-
-Only return valid JSON, no markdown or explanations.`;
-
-    const truncatedContent = content.slice(0, 15000); // Limit content size
-
-    let apiUrl: string;
-    let headers: Record<string, string>;
-    let body: any;
-
-    switch (provider.id) {
-      case "openai":
-        apiUrl = "https://api.openai.com/v1/chat/completions";
-        headers = {
-          "Authorization": `Bearer ${provider.apiKey}`,
-          "Content-Type": "application/json",
-        };
-        body = {
-          model: provider.model || "gpt-4o",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          temperature: 0.3,
-        };
-        break;
-
-      case "grok":
-        apiUrl = "https://api.x.ai/v1/chat/completions";
-        headers = {
-          "Authorization": `Bearer ${provider.apiKey}`,
-          "Content-Type": "application/json",
-        };
-        body = {
-          model: provider.model || "grok-beta",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          temperature: 0.3,
-        };
-        break;
-
-      case "deepseek":
-        apiUrl = `${provider.baseUrl || "https://api.deepseek.com"}/chat/completions`;
-        headers = {
-          "Authorization": `Bearer ${provider.apiKey}`,
-          "Content-Type": "application/json",
-        };
-        body = {
-          model: provider.model || "deepseek-chat",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          temperature: 0.3,
-        };
-        break;
-
-      case "ollama":
-        apiUrl = `${provider.baseUrl || "http://localhost:11434"}/api/chat`;
-        headers = { "Content-Type": "application/json" };
-        body = {
-          model: provider.model || "llama3.2",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          stream: false,
-        };
-        break;
-
-      default:
-        throw new Error("Unknown provider");
-    }
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API error: ${response.status} - ${errorText.slice(0, 100)}`);
-    }
-
-    const data = await response.json();
-    
-    // Extract content based on provider format
-    let content_response: string;
-    if (provider.id === "ollama") {
-      content_response = data.message?.content || "";
-    } else {
-      content_response = data.choices?.[0]?.message?.content || "";
-    }
-
-    // Parse JSON from response
-    const jsonMatch = content_response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not parse AI response as JSON");
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-    return {
-      summary: parsed.summary,
-      severityBreakdown: parsed.severityBreakdown,
-      insights: parsed.insights,
-      recommendations: parsed.recommendations,
-    };
   };
 
   const handleUpload = async (file: File, content: string) => {
@@ -163,15 +50,50 @@ Only return valid JSON, no markdown or explanations.`;
     setAnalyses(prev => [newAnalysis, ...prev]);
     setSelectedAnalysis(newAnalysis);
     setIsAnalyzing(true);
+    setAnalysisError(undefined);
+    setAnalysisProgress(0);
+    setAnalysisStage("Testing connection to AI model...");
 
     try {
-      const result = await analyzeWithAI(content, provider);
+      // Step 1: Test connection first
+      setAnalysisProgress(10);
+      const connectionResult = await testConnection(provider);
+      
+      if (!connectionResult.success) {
+        throw new Error(connectionResult.message);
+      }
+      
+      setAnalysisProgress(25);
+      setAnalysisStage("Connection verified. Sending log data...");
+
+      // Step 2: Analyze with AI
+      const result = await analyzeWithAI(content, provider, (stage) => {
+        setAnalysisStage(stage);
+        // Update progress based on stage
+        if (stage.includes("Connecting")) setAnalysisProgress(35);
+        if (stage.includes("Sending")) setAnalysisProgress(50);
+        if (stage.includes("Processing")) setAnalysisProgress(75);
+        if (stage.includes("Finalizing")) setAnalysisProgress(90);
+      });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setAnalysisProgress(100);
+      setAnalysisStage("Analysis complete!");
       
       const completedAnalysis: LogAnalysis = {
         ...newAnalysis,
         status: "completed",
-        ...result,
+        summary: result.summary,
+        severityBreakdown: result.severityBreakdown,
+        insights: result.insights,
+        recommendations: result.recommendations,
       };
+
+      // Small delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       setAnalyses(prev => prev.map(a => a.id === newAnalysis.id ? completedAnalysis : a));
       setSelectedAnalysis(completedAnalysis);
@@ -181,10 +103,13 @@ Only return valid JSON, no markdown or explanations.`;
         description: `${file.name} has been analyzed successfully.`,
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setAnalysisError(errorMessage);
+      
       const errorAnalysis: LogAnalysis = {
         ...newAnalysis,
         status: "error",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
       };
 
       setAnalyses(prev => prev.map(a => a.id === newAnalysis.id ? errorAnalysis : a));
@@ -192,7 +117,7 @@ Only return valid JSON, no markdown or explanations.`;
 
       toast({
         title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -342,7 +267,17 @@ ${selectedAnalysis.recommendations?.map((r, idx) => `${idx + 1}. ${r}`).join("\n
 
         {/* Right: Analysis Report */}
         <div className="flex-1 min-w-0">
-          {selectedAnalysis ? (
+          {isAnalyzing ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="w-full max-w-md">
+                <AnalysisProgress 
+                  stage={analysisStage} 
+                  progress={analysisProgress} 
+                  error={analysisError}
+                />
+              </div>
+            </div>
+          ) : selectedAnalysis ? (
             <AnalysisReport analysis={selectedAnalysis} onExport={handleExport} />
           ) : (
             <div className="h-full flex items-center justify-center">

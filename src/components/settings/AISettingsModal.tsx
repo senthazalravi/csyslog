@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Settings, Eye, EyeOff, Check, X, Server, Zap, Brain, Globe } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Settings, Eye, EyeOff, Check, X, Server, Zap, Brain, Globe, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AISettings, defaultAISettings, AIProvider } from "@/types/ai-settings";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
+import { ConnectionTest } from "./ConnectionTest";
 
 interface AISettingsModalProps {
   trigger?: React.ReactNode;
@@ -72,6 +73,9 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
             <Settings className="w-5 h-5 text-primary" />
             AI Model Settings
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Configure AI providers for log analysis. Ollama runs locally with no CORS restrictions.
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="providers" className="mt-4">
@@ -163,6 +167,27 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
                           className="bg-secondary/50 border-border font-mono text-xs"
                         />
                       </div>
+
+                      {/* Connection Test */}
+                      <div className="pt-2">
+                        <ConnectionTest provider={provider} />
+                      </div>
+
+                      {/* CORS Warning for cloud providers */}
+                      {provider.id !== "ollama" && (
+                        <div className="p-3 rounded-md bg-warning/10 border border-warning/30 text-xs">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-medium text-warning">Browser Limitation</p>
+                              <p className="text-warning/80 mt-1">
+                                Cloud APIs cannot be called directly from browsers due to CORS. 
+                                For local analysis, use Ollama instead.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
