@@ -140,7 +140,7 @@ export const testConnection = async (provider: AIProvider): Promise<ConnectionTe
   }
 };
 
-// Analyze logs with AI provider
+// Analyze logs with AI provider (non-streaming)
 export const analyzeWithAI = async (
   content: string,
   provider: AIProvider,
@@ -165,7 +165,6 @@ Only return valid JSON, no markdown or explanations.`;
 
     switch (provider.id) {
       case "ollama":
-        // Ollama uses OpenAI-compatible endpoint
         apiUrl = `${provider.baseUrl || "http://localhost:11434"}/v1/chat/completions`;
         headers = { "Content-Type": "application/json" };
         body = {
@@ -179,52 +178,11 @@ Only return valid JSON, no markdown or explanations.`;
         break;
 
       case "openai":
-        apiUrl = "https://api.openai.com/v1/chat/completions";
-        headers = {
-          "Authorization": `Bearer ${provider.apiKey}`,
-          "Content-Type": "application/json",
-        };
-        body = {
-          model: provider.model || "gpt-4o",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          temperature: 0.3,
-        };
-        break;
-
       case "grok":
-        apiUrl = "https://api.x.ai/v1/chat/completions";
-        headers = {
-          "Authorization": `Bearer ${provider.apiKey}`,
-          "Content-Type": "application/json",
-        };
-        body = {
-          model: provider.model || "grok-beta",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          temperature: 0.3,
-        };
-        break;
-
       case "deepseek":
-        apiUrl = `${provider.baseUrl || "https://api.deepseek.com"}/chat/completions`;
-        headers = {
-          "Authorization": `Bearer ${provider.apiKey}`,
-          "Content-Type": "application/json",
+        return { 
+          error: `${provider.name} cannot be called directly from the browser due to CORS restrictions. Please use Ollama for local analysis.` 
         };
-        body = {
-          model: provider.model || "deepseek-chat",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
-          ],
-          temperature: 0.3,
-        };
-        break;
 
       default:
         return { error: "Unknown provider" };
@@ -240,25 +198,14 @@ Only return valid JSON, no markdown or explanations.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      
-      // Check for CORS-related errors
-      if (provider.id !== "ollama") {
-        return { 
-          error: `API Error (${response.status}): Cloud-based APIs like ${provider.name} cannot be called directly from the browser due to CORS restrictions. Please use Ollama for local analysis, or the app needs a backend proxy to call cloud APIs.` 
-        };
-      }
-      
       return { error: `API error: ${response.status} - ${errorText.slice(0, 100)}` };
     }
 
     onProgress?.("Processing AI response...");
 
     const data = await response.json();
-    
-    // Extract content - OpenAI-compatible format
     const contentResponse = data.choices?.[0]?.message?.content || "";
 
-    // Parse JSON from response
     const jsonMatch = contentResponse.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { error: "Could not parse AI response as JSON" };
@@ -276,13 +223,138 @@ Only return valid JSON, no markdown or explanations.`;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     
-    if (message.includes("Failed to fetch") || message.includes("NetworkError") || message.includes("CORS")) {
-      if (provider.id === "ollama") {
-        return { error: "Cannot reach Ollama. Make sure it's running at " + (provider.baseUrl || "http://localhost:11434") };
+    if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
+      return { error: "Cannot reach Ollama. Make sure it's running at " + (provider.baseUrl || "http://localhost:11434") };
+    }
+    
+    return { error: message };
+  }
+};
+
+// Streaming analysis for Ollama
+export const analyzeWithAIStreaming = async (
+  content: string,
+  provider: AIProvider,
+  onProgress?: (stage: string) => void,
+  onStreamChunk?: (chunk: string, fullText: string) => void
+): Promise<{ summary?: string; severityBreakdown?: any; insights?: string[]; recommendations?: string[]; error?: string }> => {
+  if (provider.id !== "ollama") {
+    return { 
+      error: `Streaming is only supported for Ollama. ${provider.name} cannot be called directly from the browser.` 
+    };
+  }
+
+  const systemPrompt = `You are a security and systems log analyst. Analyze the provided log content and return a JSON object with:
+- summary: A brief 2-3 sentence summary of the log
+- severityBreakdown: Object with counts for critical, warning, info, success
+- insights: Array of 3-5 key insights about patterns, anomalies, or issues
+- recommendations: Array of 2-4 actionable recommendations
+
+Only return valid JSON, no markdown or explanations.`;
+
+  const truncatedContent = content.slice(0, 15000);
+  
+  onProgress?.("Connecting to Ollama...");
+
+  try {
+    const apiUrl = `${provider.baseUrl || "http://localhost:11434"}/v1/chat/completions`;
+    
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: provider.model || "llama3.2",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Analyze this log:\n\n${truncatedContent}` },
+        ],
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { error: `Ollama error: ${response.status} - ${errorText.slice(0, 100)}` };
+    }
+
+    onProgress?.("Streaming response from AI...");
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      return { error: "Failed to get response stream" };
+    }
+
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      
+      // Process complete lines
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (!line.trim() || line.startsWith(":")) continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const chunk = parsed.choices?.[0]?.delta?.content;
+          if (chunk) {
+            fullText += chunk;
+            onStreamChunk?.(chunk, fullText);
+          }
+        } catch {
+          // Ignore parse errors for incomplete JSON
+        }
       }
-      return { 
-        error: `Cannot call ${provider.name} directly from browser due to CORS. Use Ollama for local analysis.` 
-      };
+    }
+
+    // Process any remaining buffer
+    if (buffer.trim() && buffer.startsWith("data: ")) {
+      const jsonStr = buffer.slice(6).trim();
+      if (jsonStr !== "[DONE]") {
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const chunk = parsed.choices?.[0]?.delta?.content;
+          if (chunk) {
+            fullText += chunk;
+            onStreamChunk?.(chunk, fullText);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    }
+
+    onProgress?.("Parsing analysis results...");
+
+    // Parse the final JSON
+    const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { error: "Could not parse AI response as JSON. Raw response: " + fullText.slice(0, 200) };
+    }
+
+    const result = JSON.parse(jsonMatch[0]);
+    return {
+      summary: result.summary,
+      severityBreakdown: result.severityBreakdown,
+      insights: result.insights,
+      recommendations: result.recommendations,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    
+    if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
+      return { error: "Cannot reach Ollama. Make sure it's running at " + (provider.baseUrl || "http://localhost:11434") };
     }
     
     return { error: message };

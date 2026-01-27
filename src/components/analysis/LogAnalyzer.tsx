@@ -9,7 +9,7 @@ import { LogAnalysis, AISettings, defaultAISettings } from "@/types/ai-settings"
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { testConnection, analyzeWithAI } from "@/lib/ai-providers";
+import { testConnection, analyzeWithAI, analyzeWithAIStreaming } from "@/lib/ai-providers";
 
 export const LogAnalyzer = () => {
   const [settings] = useLocalStorage<AISettings>("citadel-ai-settings", defaultAISettings);
@@ -19,6 +19,7 @@ export const LogAnalyzer = () => {
   const [analysisStage, setAnalysisStage] = useState("");
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisError, setAnalysisError] = useState<string | undefined>();
+  const [streamingText, setStreamingText] = useState("");
 
   const getActiveProvider = () => {
     return settings.providers.find(
@@ -52,6 +53,7 @@ export const LogAnalyzer = () => {
     setIsAnalyzing(true);
     setAnalysisError(undefined);
     setAnalysisProgress(0);
+    setStreamingText("");
     setAnalysisStage("Testing connection to AI model...");
 
     try {
@@ -66,15 +68,35 @@ export const LogAnalyzer = () => {
       setAnalysisProgress(25);
       setAnalysisStage("Connection verified. Sending log data...");
 
-      // Step 2: Analyze with AI
-      const result = await analyzeWithAI(content, provider, (stage) => {
-        setAnalysisStage(stage);
-        // Update progress based on stage
-        if (stage.includes("Connecting")) setAnalysisProgress(35);
-        if (stage.includes("Sending")) setAnalysisProgress(50);
-        if (stage.includes("Processing")) setAnalysisProgress(75);
-        if (stage.includes("Finalizing")) setAnalysisProgress(90);
-      });
+      // Step 2: Analyze with AI (use streaming for Ollama)
+      let result;
+      
+      if (provider.id === "ollama") {
+        result = await analyzeWithAIStreaming(
+          content, 
+          provider, 
+          (stage) => {
+            setAnalysisStage(stage);
+            if (stage.includes("Connecting")) setAnalysisProgress(35);
+            if (stage.includes("Streaming")) setAnalysisProgress(50);
+            if (stage.includes("Parsing")) setAnalysisProgress(90);
+          },
+          (_chunk, fullText) => {
+            setStreamingText(fullText);
+            // Dynamic progress based on text length
+            const textProgress = Math.min(85, 50 + (fullText.length / 100));
+            setAnalysisProgress(textProgress);
+          }
+        );
+      } else {
+        result = await analyzeWithAI(content, provider, (stage) => {
+          setAnalysisStage(stage);
+          if (stage.includes("Connecting")) setAnalysisProgress(35);
+          if (stage.includes("Sending")) setAnalysisProgress(50);
+          if (stage.includes("Processing")) setAnalysisProgress(75);
+          if (stage.includes("Finalizing")) setAnalysisProgress(90);
+        });
+      }
 
       if (result.error) {
         throw new Error(result.error);
@@ -274,6 +296,7 @@ ${selectedAnalysis.recommendations?.map((r, idx) => `${idx + 1}. ${r}`).join("\n
                   stage={analysisStage} 
                   progress={analysisProgress} 
                   error={analysisError}
+                  streamingText={streamingText}
                 />
               </div>
             </div>
