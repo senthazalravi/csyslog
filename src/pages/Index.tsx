@@ -8,8 +8,15 @@ import { SystemOverview } from "@/components/dashboard/SystemOverview";
 import { LogAnalyzer } from "@/components/analysis/LogAnalyzer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Monitor, Upload, Brain } from "lucide-react";
+import { DashboardSettings, defaultDashboardSettings } from "@/types/dashboard-settings";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const Index = () => {
+  const [savedDashboardSettings] = useLocalStorage<DashboardSettings>("citadel-dashboard-settings", defaultDashboardSettings);
+  const dashboardSettings = savedDashboardSettings;
+
+  const anyModuleVisible = dashboardSettings.showSystemOverview || dashboardSettings.showNetworkHealth || dashboardSettings.showAIInsights || dashboardSettings.showAlertsSummary || dashboardSettings.showDeviceHealth;
+
   return (
     <div className="min-h-screen bg-background grid-pattern">
       <div className="flex flex-col h-screen p-3 gap-3">
@@ -30,29 +37,53 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="monitor" className="flex-1 min-h-0 mt-0">
-            <div className="h-full grid grid-cols-12 gap-3">
-              {/* Left Column - Log Stream (narrower) */}
-              <div className="col-span-4 min-h-0">
+            <div className="h-full flex flex-col gap-3 min-h-0">
+              {/* Top - Live Monitor (edge-to-edge) */}
+              <div className="w-full min-h-0 h-72 md:h-80 lg:h-[36rem] flex-none">
+                {/* Live Log Stream is always shown */}
                 <LogStream />
               </div>
 
-              {/* Center Column - AI Insights */}
-              <div className="col-span-5 flex flex-col gap-3 min-h-0">
-                <SystemOverview />
-                <div className="flex-1 min-h-0">
-                  <AIInsights />
-                </div>
-              </div>
+              {/* Bottom - Other modules in a responsive 3-column grid */}
+              <div className="flex-1 overflow-auto min-h-0">
+                {!anyModuleVisible ? (
+                  <div className="p-6">
+                    <div className="tactical-panel p-4">
+                      <h3 className="text-sm font-semibold text-foreground">No dashboard modules enabled</h3>
+                      <p className="text-xs text-muted-foreground mt-2">Enable modules in Settings → Dashboard to show them below the Live Log Stream.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full grid grid-cols-12 gap-3 min-h-0">
+                    <div className="col-span-12 md:col-span-4 flex flex-col gap-3 min-h-0 h-full">
+                      {dashboardSettings.showSystemOverview && <SystemOverview />}
+                      {dashboardSettings.showNetworkHealth && (
+                        <div className="min-h-0">
+                          <NetworkHealth />
+                        </div>
+                      )}
+                    </div>
 
-              {/* Right Column - Health Panels */}
-              <div className="col-span-3 flex flex-col gap-3 min-h-0">
-                <AlertsSummary />
-                <div className="flex-1 min-h-0">
-                  <DeviceHealth />
-                </div>
-                <div className="flex-1 min-h-0">
-                  <NetworkHealth />
-                </div>
+                    <div className="col-span-12 md:col-span-5 flex flex-col gap-3 min-h-0 h-full">
+                      <div className="flex-1 min-h-0">
+                        {dashboardSettings.showAIInsights && <AIInsights />}
+                      </div>
+                    </div>
+
+                    <div className="col-span-12 md:col-span-3 flex flex-col gap-3 min-h-0 h-full">
+                      {dashboardSettings.showAlertsSummary && (
+                        <div className="min-h-0">
+                          <AlertsSummary />
+                        </div>
+                      )}
+                      {dashboardSettings.showDeviceHealth && (
+                        <div className="flex-1 min-h-0">
+                          <DeviceHealth />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

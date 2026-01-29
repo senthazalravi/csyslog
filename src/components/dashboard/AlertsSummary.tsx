@@ -36,38 +36,40 @@ export const AlertsSummary = () => {
   const total = alerts.reduce((sum, a) => sum + a.count, 0);
 
   return (
-    <div className="tactical-panel p-4">
+    <div className="tactical-panel p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-foreground">Active Alerts</h2>
         <span className="text-xs font-mono text-muted-foreground">{total} total</span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
-        {alerts.map((alert) => {
-          const Icon = getIcon(alert.severity);
-          const colors = getColors(alert.severity);
-          return (
-            <div
-              key={alert.severity}
-              className={cn(
-                "p-3 rounded-lg border text-center transition-all hover:scale-105 cursor-pointer",
-                colors.bg,
-                colors.border
-              )}
-            >
-              <Icon className={cn("w-5 h-5 mx-auto mb-2", colors.text)} />
-              <p className={cn("text-2xl font-bold font-mono", colors.text)}>{alert.count}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                {alert.severity}
-              </p>
-              <div className="mt-1 text-[10px] font-mono">
-                {alert.trend === "up" && <span className="text-critical">↑</span>}
-                {alert.trend === "down" && <span className="text-success">↓</span>}
-                {alert.trend === "stable" && <span className="text-muted-foreground">→</span>}
+      <div className="flex-1 overflow-auto">
+        <div className="grid grid-cols-4 gap-2">
+          {alerts.map((alert) => {
+            const Icon = getIcon(alert.severity);
+            const colors = getColors(alert.severity);
+            return (
+              <div
+                key={alert.severity}
+                className={cn(
+                  "p-3 rounded-lg border text-center transition-all hover:scale-105 cursor-pointer",
+                  colors.bg,
+                  colors.border
+                )}
+              >
+                <Icon className={cn("w-5 h-5 mx-auto mb-2", colors.text)} />
+                <p className={cn("text-2xl font-bold font-mono", colors.text)}>{alert.count}</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                  {alert.severity}
+                </p>
+                <div className="mt-1 text-[10px] font-mono">
+                  {alert.trend === "up" && <span className="text-critical">↑</span>}
+                  {alert.trend === "down" && <span className="text-success">↓</span>}
+                  {alert.trend === "stable" && <span className="text-muted-foreground">→</span>}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
