@@ -6,92 +6,81 @@ import { AIInsights } from "@/components/dashboard/AIInsights";
 import { AlertsSummary } from "@/components/dashboard/AlertsSummary";
 import { SystemOverview } from "@/components/dashboard/SystemOverview";
 import { LogAnalyzer } from "@/components/analysis/LogAnalyzer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Monitor, Upload, Brain } from "lucide-react";
-import { DashboardSettings, defaultDashboardSettings } from "@/types/dashboard-settings";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+
+const SectionDivider = ({ label }: { label: string }) => (
+  <div className="section-divider">
+    <span>{label}</span>
+  </div>
+);
 
 const Index = () => {
-  const [savedDashboardSettings] = useLocalStorage<DashboardSettings>("citadel-dashboard-settings", defaultDashboardSettings);
-  const dashboardSettings = savedDashboardSettings;
-
-  const anyModuleVisible = dashboardSettings.showSystemOverview || dashboardSettings.showNetworkHealth || dashboardSettings.showAIInsights || dashboardSettings.showAlertsSummary || dashboardSettings.showDeviceHealth;
-
   return (
     <div className="min-h-screen bg-background grid-pattern">
-      <div className="flex flex-col h-screen p-3 gap-3">
-        {/* Header */}
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 p-3 pb-0">
         <Header systemStatus="online" aiStatus="connected" />
+      </div>
 
-        {/* Main Content with Tabs */}
-        <Tabs defaultValue="monitor" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="w-fit bg-secondary/50 self-start mb-3">
-            <TabsTrigger value="monitor" className="text-xs gap-1.5">
-              <Monitor className="w-3.5 h-3.5" />
-              Live Monitor
-            </TabsTrigger>
-            <TabsTrigger value="analyzer" className="text-xs gap-1.5">
-              <Upload className="w-3.5 h-3.5" />
-              Log Analyzer
-            </TabsTrigger>
-          </TabsList>
+      {/* Scrollable Content */}
+      <div className="p-3 space-y-4">
+        {/* ── System Overview ── full-width stat bar */}
+        <SectionDivider label="System Status" />
+        <div className="animate-fade-in-up tactical-panel-interactive">
+          <SystemOverview />
+        </div>
 
-          <TabsContent value="monitor" className="flex-1 min-h-0 mt-0">
-            <div className="h-full flex flex-col gap-3 min-h-0">
-              {/* Top - Live Monitor (edge-to-edge) */}
-              <div className="w-full min-h-0 h-72 md:h-80 lg:h-[36rem] flex-none">
-                {/* Live Log Stream is always shown */}
-                <LogStream />
-              </div>
-
-              {/* Bottom - Other modules in a responsive 3-column grid */}
-              <div className="flex-1 overflow-auto min-h-0">
-                {!anyModuleVisible ? (
-                  <div className="p-6">
-                    <div className="tactical-panel p-4">
-                      <h3 className="text-sm font-semibold text-foreground">No dashboard modules enabled</h3>
-                      <p className="text-xs text-muted-foreground mt-2">Enable modules in Settings → Dashboard to show them below the Live Log Stream.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-full grid grid-cols-12 gap-3 min-h-0">
-                    <div className="col-span-12 md:col-span-4 flex flex-col gap-3 min-h-0 h-full">
-                      {dashboardSettings.showSystemOverview && <SystemOverview />}
-                      {dashboardSettings.showNetworkHealth && (
-                        <div className="min-h-0">
-                          <NetworkHealth />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="col-span-12 md:col-span-5 flex flex-col gap-3 min-h-0 h-full">
-                      <div className="flex-1 min-h-0">
-                        {dashboardSettings.showAIInsights && <AIInsights />}
-                      </div>
-                    </div>
-
-                    <div className="col-span-12 md:col-span-3 flex flex-col gap-3 min-h-0 h-full">
-                      {dashboardSettings.showAlertsSummary && (
-                        <div className="min-h-0">
-                          <AlertsSummary />
-                        </div>
-                      )}
-                      {dashboardSettings.showDeviceHealth && (
-                        <div className="flex-1 min-h-0">
-                          <DeviceHealth />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* ── Live Monitor + AI Insights ── side by side */}
+        <SectionDivider label="Live Monitoring" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div
+            className="lg:col-span-8 animate-fade-in-up tactical-panel-interactive"
+            style={{ animationDelay: "50ms" }}
+          >
+            <div className="h-[28rem] lg:h-[32rem]">
+              <LogStream />
             </div>
-          </TabsContent>
+          </div>
+          <div
+            className="lg:col-span-4 animate-fade-in-up tactical-panel-interactive"
+            style={{ animationDelay: "100ms" }}
+          >
+            <div className="h-[28rem] lg:h-[32rem]">
+              <AIInsights />
+            </div>
+          </div>
+        </div>
 
-          <TabsContent value="analyzer" className="flex-1 min-h-0 mt-0">
-            <LogAnalyzer />
-          </TabsContent>
-        </Tabs>
+        {/* ── System Health ── 3-column grid */}
+        <SectionDivider label="System Health" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            className="animate-fade-in-up tactical-panel-interactive"
+            style={{ animationDelay: "150ms" }}
+          >
+            <NetworkHealth />
+          </div>
+          <div
+            className="animate-fade-in-up tactical-panel-interactive"
+            style={{ animationDelay: "200ms" }}
+          >
+            <AlertsSummary />
+          </div>
+          <div
+            className="animate-fade-in-up tactical-panel-interactive"
+            style={{ animationDelay: "250ms" }}
+          >
+            <DeviceHealth />
+          </div>
+        </div>
+
+        {/* ── Log Analyzer ── full-width section */}
+        <SectionDivider label="Analysis" />
+        <div
+          className="animate-fade-in-up tactical-panel-interactive pb-6"
+          style={{ animationDelay: "300ms" }}
+        >
+          <LogAnalyzer />
+        </div>
       </div>
     </div>
   );

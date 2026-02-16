@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AISettings, defaultAISettings, AIProvider } from "@/types/ai-settings";
-import { DashboardSettings, defaultDashboardSettings } from "@/types/dashboard-settings";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 import { ConnectionTest } from "./ConnectionTest";
@@ -30,28 +29,8 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
   const [open, setOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Dashboard module visibility settings
-  const [savedDashboardSettings, setSavedDashboardSettings] = useLocalStorage<DashboardSettings>("citadel-dashboard-settings", defaultDashboardSettings);
-  const [dashboardSettings, setDashboardSettings] = useState<DashboardSettings>(savedDashboardSettings);
-
-  const updateDashboard = (updates: Partial<DashboardSettings>) => {
-    const next = { ...dashboardSettings, ...updates };
-    setDashboardSettings(next);
-    // Persist immediately so the dashboard view updates live
-    setSavedDashboardSettings(next);
-    // Mark as changed so Save Settings button reflects that something changed
-    setHasChanges(true);
-  };
-
-  const handleSaveDashboard = () => {
-    setSavedDashboardSettings(dashboardSettings);
-    setHasChanges(false);
-  };
-
   const handleSave = () => {
     setSavedSettings(settings);
-    // also persist dashboard settings when saving the top-level settings
-    setSavedDashboardSettings(dashboardSettings);
     setHasChanges(false);
   };
 
@@ -101,10 +80,9 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
         </DialogHeader>
 
         <Tabs defaultValue="providers" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3 bg-secondary/50">
+          <TabsList className="grid w-full grid-cols-2 bg-secondary/50">
             <TabsTrigger value="providers">Providers</TabsTrigger>
             <TabsTrigger value="active">Active Model</TabsTrigger>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           </TabsList>
 
           <TabsContent value="providers" className="space-y-4 mt-4">
@@ -204,7 +182,7 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
                             <div>
                               <p className="font-medium text-warning">Browser Limitation</p>
                               <p className="text-warning/80 mt-1">
-                                Cloud APIs cannot be called directly from browsers due to CORS. 
+                                Cloud APIs cannot be called directly from browsers due to CORS.
                                 For local analysis, use Ollama instead.
                               </p>
                             </div>
@@ -266,74 +244,14 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
               )}
             </div>
           </TabsContent>
-
-          <TabsContent value="dashboard" className="mt-4">
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-2">Choose modules to show on the dashboard. <span className="text-xs text-muted-foreground">(Live Log Stream is always displayed)</span></p>
-
-              <div className="grid grid-cols-1 gap-2">
-                <div className="flex items-center justify-between p-2 rounded border border-border bg-secondary/20">
-                  <div>
-                    <p className="text-sm text-foreground">Live Log Stream</p>
-                    <p className="text-xs text-muted-foreground">Always shown at the top</p>
-                  </div>
-                  <Switch checked={true} disabled />
-                </div>
-
-                <div className="flex items-center justify-between p-2 rounded border border-border bg-secondary/20">
-                  <div>
-                    <p className="text-sm text-foreground">System Overview</p>
-                    <p className="text-xs text-muted-foreground">Top-left module</p>
-                  </div>
-                  <Switch checked={dashboardSettings.showSystemOverview} onCheckedChange={(v) => updateDashboard({ showSystemOverview: Boolean(v) })} />
-                </div>
-
-                <div className="flex items-center justify-between p-2 rounded border border-border bg-secondary/20">
-                  <div>
-                    <p className="text-sm text-foreground">Network Health</p>
-                    <p className="text-xs text-muted-foreground">Network metrics and interfaces</p>
-                  </div>
-                  <Switch checked={dashboardSettings.showNetworkHealth} onCheckedChange={(v) => updateDashboard({ showNetworkHealth: Boolean(v) })} />
-                </div>
-
-                <div className="flex items-center justify-between p-2 rounded border border-border bg-secondary/20">
-                  <div>
-                    <p className="text-sm text-foreground">AI Insights</p>
-                    <p className="text-xs text-muted-foreground">AI-generated alerts and recommendations</p>
-                  </div>
-                  <Switch checked={dashboardSettings.showAIInsights} onCheckedChange={(v) => updateDashboard({ showAIInsights: Boolean(v) })} />
-                </div>
-
-                <div className="flex items-center justify-between p-2 rounded border border-border bg-secondary/20">
-                  <div>
-                    <p className="text-sm text-foreground">Active Alerts</p>
-                    <p className="text-xs text-muted-foreground">Aggregated alert counts</p>
-                  </div>
-                  <Switch checked={dashboardSettings.showAlertsSummary} onCheckedChange={(v) => updateDashboard({ showAlertsSummary: Boolean(v) })} />
-                </div>
-
-                <div className="flex items-center justify-between p-2 rounded border border-border bg-secondary/20">
-                  <div>
-                    <p className="text-sm text-foreground">Device Health</p>
-                    <p className="text-xs text-muted-foreground">CPU, memory, disk metrics</p>
-                  </div>
-                  <Switch checked={dashboardSettings.showDeviceHealth} onCheckedChange={(v) => updateDashboard({ showDeviceHealth: Boolean(v) })} />
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <Button variant="ghost" onClick={() => { setDashboardSettings(savedDashboardSettings); setSavedDashboardSettings(savedDashboardSettings); }}>Revert</Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
 
         <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border">
           <Button variant="ghost" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={() => { handleSave(); handleSaveDashboard(); setOpen(false); }} 
+          <Button
+            onClick={() => { handleSave(); setOpen(false); }}
             disabled={!hasChanges}
             className="bg-primary hover:bg-primary/90"
           >
@@ -345,3 +263,4 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
     </Dialog>
   );
 };
+

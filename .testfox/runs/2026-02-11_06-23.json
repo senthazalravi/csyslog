@@ -1,0 +1,225 @@
+{
+  "trigger": "manual",
+  "duration": 30930,
+  "summary": {
+    "total": 17,
+    "passed": 0,
+    "failed": 17,
+    "skipped": 0
+  },
+  "tests": [
+    {
+      "testId": "buttons-1770787347377",
+      "testName": "Button Interactions",
+      "category": "UI/E2E",
+      "status": "failed",
+      "duration": 2884,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-ORD-001",
+      "testName": "Order Creation - Idempotency",
+      "category": "backend_idempotency",
+      "status": "failed",
+      "duration": 181,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-PAY-002",
+      "testName": "PayPal Authorization Webhook - Out-of-Order Delivery",
+      "category": "backend_webhooks",
+      "status": "failed",
+      "duration": 2245,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-INV-003",
+      "testName": "Inventory Reservation - Last Item Race Condition",
+      "category": "backend_concurrency",
+      "status": "failed",
+      "duration": 175,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-ORD-004",
+      "testName": "Order Cancellation - Stock Release",
+      "category": "backend_state_integrity",
+      "status": "failed",
+      "duration": 2246,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-WH-005",
+      "testName": "Duplicate Webhook Handling",
+      "category": "backend_reliability",
+      "status": "failed",
+      "duration": 168,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-PAY-006",
+      "testName": "Partial Failure - Payment Success, Order Failure",
+      "category": "backend_failure_recovery",
+      "status": "failed",
+      "duration": 2282,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-API-007",
+      "testName": "API Contract Validation",
+      "category": "backend_api_contract",
+      "status": "failed",
+      "duration": 177,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-INF-008",
+      "testName": "Retry Storm Protection",
+      "category": "backend_stability",
+      "status": "failed",
+      "duration": 2240,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-CUST-009",
+      "testName": "GDPR - Customer Deletion Propagation",
+      "category": "backend_compliance",
+      "status": "failed",
+      "duration": 190,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "BE-OBS-010",
+      "testName": "Observability Safety",
+      "category": "backend_observability",
+      "status": "failed",
+      "duration": 2235,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "d0449ee8-a809-46ce-aba3-9d07d75883d4",
+      "testName": "Smoke: GET / is accessible",
+      "category": "smoke",
+      "status": "failed",
+      "duration": 202,
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "6e1ced2b-51b0-4928-b45a-11a713c543c8",
+      "testName": "Smoke: GET * is accessible",
+      "category": "smoke",
+      "status": "failed",
+      "duration": 69,
+      "error": "page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000*\", waiting until \"networkidle\"\u001b[22m\n"
+    },
+    {
+      "testId": "ff50b7eb-0c28-441c-9fdc-044e2feebecb",
+      "testName": "Smoke: API ${BASEURL}/API/TAGS ${baseUrl}/api/tags",
+      "category": "smoke",
+      "status": "failed",
+      "duration": 1,
+      "error": "Invalid URL"
+    },
+    {
+      "testId": "3eeb5f58-357e-4588-b1e1-0df3c360a56b",
+      "testName": "Smoke: API HTTPS://API.OPENAI.COM/V1/MODELS https://api.openai.com/v1/models",
+      "category": "smoke",
+      "status": "failed",
+      "duration": 0,
+      "error": "Invalid URL"
+    },
+    {
+      "testId": "3202f1f6-1565-4b2d-bfdd-678ac820db9d",
+      "testName": "Smoke: API HTTPS://API.X.AI/V1/MODELS https://api.x.ai/v1/models",
+      "category": "smoke",
+      "status": "failed",
+      "duration": 1,
+      "error": "Invalid URL"
+    },
+    {
+      "testId": "8086c378-e3c9-490d-b343-0194d73d76a4",
+      "testName": "Smoke: API ${BASEURL}/MODELS ${baseUrl}/models",
+      "category": "smoke",
+      "status": "failed",
+      "duration": 0,
+      "error": "Invalid URL"
+    }
+  ],
+  "categoryResults": [
+    {
+      "category": "UI/E2E",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_idempotency",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_webhooks",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_concurrency",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_state_integrity",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_reliability",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_failure_recovery",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_api_contract",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_stability",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_compliance",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "backend_observability",
+      "total": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "category": "smoke",
+      "total": 6,
+      "passed": 0,
+      "failed": 6
+    }
+  ],
+  "id": "run-1770787398449-4rlcyb",
+  "commit": "b9a6b0306a907ddd3d1b2fad1d3f6b2a9d968997",
+  "timestamp": "2026-02-11T05:23:18.449Z"
+}
