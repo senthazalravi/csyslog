@@ -147,14 +147,18 @@ export const ConnectionTest = ({ provider }: ConnectionTestProps) => {
                 {result.message}
               </p>
 
-              {!result.success && result.message.includes("CORS") && (
+              {(!result.success && (result.message.includes("error") || result.message.includes("CORS") || result.message.includes("Deployment") || result.message.includes("failed"))) && (
                 <div className="mt-2 p-2 rounded bg-secondary/50 border border-border">
                   <p className="text-[10px] font-bold text-foreground mb-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 text-warning" />
-                    TROUBLESHOOTING TIP:
+                    {result.message.includes("Deployment") ? "DEPLOYMENT TROUBLESHOOTING:" : "TROUBLESHOOTING TIP:"}
                   </p>
-                  <p className="text-[10px] text-muted-foreground italic">
-                    The local proxy might be blocked. Ensure Vite server is running and check your browser's console for "Mixed Content" or "CORS" errors.
+                  <p className="text-[10px] text-muted-foreground italic leading-normal">
+                    {result.message.includes("Deployment")
+                      ? "Vite proxies don't work in production. You must configure 'Rewrites' in your hosting dashboard (Vercel/Netlify) to map '/nvidia-api' to the official NVIDIA endpoint."
+                      : result.message.includes("NVIDIA")
+                        ? "Check your VITE_NVIDIA_API_KEY in .env and ensure the Vite dev server was restarted."
+                        : "The local proxy might be blocked. Ensure Vite server is running and check your browser's console for CORS errors."}
                   </p>
                 </div>
               )}

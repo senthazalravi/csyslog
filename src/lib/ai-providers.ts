@@ -246,7 +246,14 @@ export const testConnection = async (
 
         if (!response.ok) {
           const error = await response.text();
-          throw new Error(`NVIDIA error: ${response.status} - ${error.slice(0, 100)}`);
+          let msg = `NVIDIA error: ${response.status}`;
+          if (response.status === 401) msg = "Authentication failed: Invalid API key.";
+          if (response.status === 404) msg = `Model "${model}" not found or endpoint incorrect.`;
+
+          if (!import.meta.env.DEV && (response.status === 404 || response.status === 0)) {
+            msg += " (Deployment CORS/Proxy Limitation)";
+          }
+          throw new Error(msg);
         }
 
         return {
@@ -432,8 +439,12 @@ Only return valid JSON, no markdown or explanations.`;
 
     if (!response.ok) {
       const errorText = await response.text();
+      let errorMsg = `API error: ${response.status} - ${errorText.slice(0, 100)}`;
+      if (!import.meta.env.DEV && response.status === 404) {
+        errorMsg += ". Note: Deployed environments require a backend proxy for cloud APIs.";
+      }
       return {
-        error: `API error: ${response.status} - ${errorText.slice(0, 100)}`,
+        error: errorMsg,
       };
     }
 
