@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Upload, FileText, Loader2, AlertCircle, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LogAnalysis } from "@/types/ai-settings";
@@ -15,11 +15,11 @@ export const LogUpload = ({ onUpload, isAnalyzing }: LogUploadProps) => {
 
   const handleFile = useCallback(async (file: File) => {
     setError(null);
-    
+
     // Validate file type
     const validTypes = [".log", ".txt", ".json", ".csv", ".syslog"];
     const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
-    
+
     if (!validTypes.includes(ext) && !file.type.startsWith("text/")) {
       setError("Please upload a log file (.log, .txt, .json, .csv, or .syslog)");
       return;
@@ -42,7 +42,7 @@ export const LogUpload = ({ onUpload, isAnalyzing }: LogUploadProps) => {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   }, [handleFile]);
@@ -83,7 +83,7 @@ export const LogUpload = ({ onUpload, isAnalyzing }: LogUploadProps) => {
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isAnalyzing}
         />
-        
+
         <div className="flex flex-col items-center text-center">
           {isAnalyzing ? (
             <>
@@ -111,9 +111,34 @@ export const LogUpload = ({ onUpload, isAnalyzing }: LogUploadProps) => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-xs text-critical">
+        <div className="flex items-center gap-2 text-xs text-critical bg-critical/5 p-2 rounded border border-critical/10">
           <AlertCircle className="w-3.5 h-3.5" />
           {error}
+        </div>
+      )}
+
+      {!isAnalyzing && (
+        <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider">
+            <Cpu className="w-3.5 h-3.5" />
+            OS Diagnostics
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Need to analyze hardware/driver issues? Download our tactical PowerShell script to gather OS & device logs for a deep analysis.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-[10px] h-8 border-primary/30 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+            onClick={() => {
+              const link = document.createElement('a');
+              link.href = '/collect_logs.ps1';
+              link.download = 'citadel_log_collector.ps1';
+              link.click();
+            }}
+          >
+            Download PowerShell Collector
+          </Button>
         </div>
       )}
     </div>

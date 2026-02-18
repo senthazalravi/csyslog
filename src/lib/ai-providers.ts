@@ -365,11 +365,17 @@ export const analyzeWithAI = async (
   deviceFailures?: DeviceFailure[];
   error?: string;
 }> => {
-  const systemPrompt = `You are a security and systems log analyst. Analyze the provided log content and return a JSON object with:
+  const systemPrompt = `You are a specialist security and systems log analyst. Analyze the provided log content (which may include Browser console logs, PowerShell output, or OS event logs) and return a JSON object with:
 - summary: A brief 2-3 sentence summary of the log
 - severityBreakdown: Object with counts for critical, warning, info, success
-- insights: Array of 3-5 key insights about patterns, anomalies, or issues
+- insights: Array of 3-5 key insights about patterns, anomalies, network failures, or system issues
 - recommendations: Array of 2-4 actionable recommendations
+- deviceFailures: An array of objects if any hardware issues, driver errors, missing drivers, or disconnected hardware are detected. Each object must have:
+    - device: Name of the component, driver, or hardware (e.g. "Realtek Audio Driver", "NVIDIA GPU")
+    - error: Description of the specific error, missing state, or driver failure
+    - timestamp: The timestamp from the log (if available)
+    - severity: critical, warning, or info
+    - recommendation: Actionable fix (e.g. "Reinstall driver version X", "Check physical connection")
 
 Only return valid JSON, no markdown or explanations.`;
 
@@ -507,11 +513,17 @@ export const analyzeWithAIStreaming = async (
     };
   }
 
-  const systemPrompt = `You are a security and systems log analyst. Analyze the provided log content and return a JSON object with:
+  const systemPrompt = `You are a specialist security and systems log analyst. Analyze the provided log content (which may include Browser console logs, PowerShell output, or OS event logs) and return a JSON object with:
 - summary: A brief 2-3 sentence summary of the log
 - severityBreakdown: Object with counts for critical, warning, info, success
-- insights: Array of 3-5 key insights about patterns, anomalies, or issues
+- insights: Array of 3-5 key insights about patterns, anomalies, network failures, or system issues
 - recommendations: Array of 2-4 actionable recommendations
+- deviceFailures: An array of objects if any hardware issues, driver errors, missing drivers, or disconnected hardware are detected. Each object must have:
+    - device: Name of the component, driver, or hardware (e.g. "Realtek Audio Driver", "NVIDIA GPU")
+    - error: Description of the specific error, missing state, or driver failure
+    - timestamp: The timestamp from the log (if available)
+    - severity: critical, warning, or info
+    - recommendation: Actionable fix (e.g. "Reinstall driver version X", "Check physical connection")
 
 Only return valid JSON, no markdown or explanations.`;
 

@@ -10,6 +10,8 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { testConnection, analyzeWithAI, analyzeWithAIStreaming } from "@/lib/ai-providers";
+import { useTacticalWatcher } from "@/hooks/useTacticalWatcher";
+import { Cpu, Radio, ShieldCheck, ShieldAlert } from "lucide-react";
 
 export const LogAnalyzer = () => {
   const [settings] = useLocalStorage<AISettings>("citadel-ai-settings", defaultAISettings);
@@ -20,6 +22,17 @@ export const LogAnalyzer = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisError, setAnalysisError] = useState<string | undefined>();
   const [streamingText, setStreamingText] = useState("");
+
+  const watcher = useTacticalWatcher((name, content) => {
+    // Handle automated analysis from watcher
+    const mockFile = new File([content], name, { type: "application/json" });
+    handleUpload(mockFile, content);
+
+    toast({
+      title: "Tactical Watcher Triggered",
+      description: `New log detected: ${name}`,
+    });
+  });
 
   const getActiveProvider = () => {
     return settings.providers.find(
@@ -242,12 +255,61 @@ ${selectedAnalysis.recommendations?.map((r, idx) => `${idx + 1}. ${r}`).join("\n
             <LogUpload onUpload={handleUpload} isAnalyzing={isAnalyzing} />
           </div>
 
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 flex flex-col">
+            {/* Tactical Watcher Controls */}
+            <div className="mx-3 mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest">
+                  <Radio className={cn("w-3 h-3", watcher.isWatching && "animate-pulse")} />
+                  Tactical Watcher
+                </div>
+                <div className={cn(
+                  "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
+                  watcher.isWatching ? "bg-success/20 text-success" : "bg-muted text-muted-foreground"
+                )}>
+                  {watcher.isWatching ? "Live" : "Idle"}
+                </div>
+              </div>
+
+              {!watcher.isWatching ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-[10px] h-7 border-primary/30 hover:bg-primary/20"
+                  onClick={watcher.startWatching}
+                >
+                  Enable Watcher
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                      <ShieldCheck className="w-2.5 h-2.5 text-success" />
+                      Watching: <span className="text-foreground font-mono truncate max-w-[150px]">{watcher.directoryName}</span>
+                    </div>
+                    {watcher.lastChecked && (
+                      <div className="text-[8px] text-muted-foreground/60 italic">
+                        Last scan: {watcher.lastChecked.toLocaleTimeString()}
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-[10px] h-7 text-critical hover:bg-critical/10"
+                    onClick={watcher.stopWatching}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <div className="px-3 py-2 flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase">
               <History className="w-3 h-3" />
               History
             </div>
-            <ScrollArea className="h-full">
+            <ScrollArea className="flex-1">
               <div className="p-2 space-y-1">
                 {analyses.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-4">
@@ -298,33 +360,33 @@ ${selectedAnalysis.recommendations?.map((r, idx) => `${idx + 1}. ${r}`).join("\n
             </ScrollArea>
           </div>
         </div>
+      </div>
 
-        {/* Right: Analysis Report */}
-        <div className="flex-1 min-w-0">
-          {isAnalyzing ? (
-            <div className="h-full flex items-center justify-center">
-              <div className="w-full max-w-md">
-                <AnalysisProgress
-                  stage={analysisStage}
-                  progress={analysisProgress}
-                  error={analysisError}
-                  streamingText={streamingText}
-                />
-              </div>
+      {/* Right: Analysis Report */}
+      <div className="flex-1 min-w-0">
+        {isAnalyzing ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="w-full max-w-md">
+              <AnalysisProgress
+                stage={analysisStage}
+                progress={analysisProgress}
+                error={analysisError}
+                streamingText={streamingText}
+              />
             </div>
-          ) : selectedAnalysis ? (
-            <AnalysisReport analysis={selectedAnalysis} onExport={handleExport} />
-          ) : (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <Brain className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  Upload a log file to start analysis
-                </p>
-              </div>
+          </div>
+        ) : selectedAnalysis ? (
+          <AnalysisReport analysis={selectedAnalysis} onExport={handleExport} />
+        ) : (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <Brain className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">
+                Upload a log file to start analysis
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
