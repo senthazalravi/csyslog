@@ -29,7 +29,7 @@ export const LogAnalyzer = () => {
 
   const handleUpload = async (file: File, content: string) => {
     const provider = getActiveProvider();
-    
+
     if (!provider) {
       toast({
         title: "No AI Provider Configured",
@@ -59,22 +59,28 @@ export const LogAnalyzer = () => {
     try {
       // Step 1: Test connection first
       setAnalysisProgress(10);
-      const connectionResult = await testConnection(provider);
-      
+      const connectionResult = await testConnection(provider, (progress) => {
+        setAnalysisStage(progress.status);
+        if (progress.percent >= 0) {
+          // Map connection/pull progress (0-100) to 10-30% range
+          setAnalysisProgress(10 + (progress.percent * 0.2));
+        }
+      });
+
       if (!connectionResult.success) {
         throw new Error(connectionResult.message);
       }
-      
-      setAnalysisProgress(25);
+
+      setAnalysisProgress(30);
       setAnalysisStage("Connection verified. Sending log data...");
 
       // Step 2: Analyze with AI (use streaming for Ollama)
       let result;
-      
+
       if (provider.id === "ollama") {
         result = await analyzeWithAIStreaming(
-          content, 
-          provider, 
+          content,
+          provider,
           (stage) => {
             setAnalysisStage(stage);
             if (stage.includes("Connecting")) setAnalysisProgress(35);
@@ -104,7 +110,7 @@ export const LogAnalyzer = () => {
 
       setAnalysisProgress(100);
       setAnalysisStage("Analysis complete!");
-      
+
       const completedAnalysis: LogAnalysis = {
         ...newAnalysis,
         status: "completed",
@@ -112,6 +118,7 @@ export const LogAnalyzer = () => {
         severityBreakdown: result.severityBreakdown,
         insights: result.insights,
         recommendations: result.recommendations,
+        deviceFailures: result.deviceFailures,
       };
 
       // Small delay to show completion
@@ -119,7 +126,7 @@ export const LogAnalyzer = () => {
 
       setAnalyses(prev => prev.map(a => a.id === newAnalysis.id ? completedAnalysis : a));
       setSelectedAnalysis(completedAnalysis);
-      
+
       toast({
         title: "Analysis Complete",
         description: `${file.name} has been analyzed successfully.`,
@@ -127,7 +134,7 @@ export const LogAnalyzer = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       setAnalysisError(errorMessage);
-      
+
       const errorAnalysis: LogAnalysis = {
         ...newAnalysis,
         status: "error",
@@ -162,6 +169,7 @@ export const LogAnalyzer = () => {
         severityBreakdown: selectedAnalysis.severityBreakdown,
         insights: selectedAnalysis.insights,
         recommendations: selectedAnalysis.recommendations,
+        deviceFailures: selectedAnalysis.deviceFailures,
       }, null, 2);
       filename = `${selectedAnalysis.fileName.replace(/\.[^/.]+$/, "")}-analysis.json`;
     } else {
@@ -181,6 +189,10 @@ Critical: ${selectedAnalysis.severityBreakdown?.critical || 0}
 Warning: ${selectedAnalysis.severityBreakdown?.warning || 0}
 Info: ${selectedAnalysis.severityBreakdown?.info || 0}
 Success: ${selectedAnalysis.severityBreakdown?.success || 0}
+
+DEVICE FAILURES
+---------------
+${selectedAnalysis.deviceFailures?.map((d, idx) => `${idx + 1}. [${d.severity.toUpperCase()}] ${d.device}: ${d.error} (${d.timestamp || "N/A"})`).join("\n") || "None detected"}
 
 KEY INSIGHTS
 ------------
@@ -292,9 +304,9 @@ ${selectedAnalysis.recommendations?.map((r, idx) => `${idx + 1}. ${r}`).join("\n
           {isAnalyzing ? (
             <div className="h-full flex items-center justify-center">
               <div className="w-full max-w-md">
-                <AnalysisProgress 
-                  stage={analysisStage} 
-                  progress={analysisProgress} 
+                <AnalysisProgress
+                  stage={analysisStage}
+                  progress={analysisProgress}
                   error={analysisError}
                   streamingText={streamingText}
                 />

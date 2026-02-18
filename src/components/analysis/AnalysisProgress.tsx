@@ -21,26 +21,28 @@ const stages = [
 ];
 
 export const AnalysisProgress = ({ stage, progress, error, streamingText }: AnalysisProgressProps) => {
-  const currentStageIndex = stages.findIndex(s => 
-    stage.toLowerCase().includes(s.id) || 
+  const currentStageIndex = stages.findIndex(s =>
+    stage.toLowerCase().includes(s.id) ||
     stage.toLowerCase().includes(s.label.toLowerCase().split(" ")[0])
   );
-  
+
   return (
     <div className="p-6 space-y-6">
       <div className="text-center space-y-2">
-        <div className="relative w-20 h-20 mx-auto">
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-          <div 
+        <div className="relative w-24 h-24 mx-auto mb-4">
+          <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+          <div
             className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"
-            style={{ animationDuration: "1.5s" }}
+            style={{ animationDuration: "1s" }}
           />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Brain className="w-8 h-8 text-primary animate-pulse" />
+          <div className="absolute inset-1 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center overflow-hidden">
+            {/* Scanning line for tactical feel */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/20 to-transparent h-1/2 w-full animate-scan-line" style={{ animation: "scan-line 2s linear infinite" }} />
+            <Brain className="w-10 h-10 text-primary animate-pulse relative z-10" />
           </div>
         </div>
-        <h3 className="text-lg font-semibold text-foreground">Analyzing Log File</h3>
-        <p className="text-sm text-muted-foreground">{stage}</p>
+        <h3 className="text-lg font-bold text-foreground tracking-tight">ANALYZING LOG SEQUENCE</h3>
+        <p className="text-xs font-mono text-primary/70 uppercase tracking-widest">{stage}</p>
       </div>
 
       <div className="space-y-2">
@@ -78,7 +80,7 @@ export const AnalysisProgress = ({ stage, progress, error, streamingText }: Anal
             const isActive = idx === currentStageIndex;
             const isCompleted = idx < currentStageIndex;
             const isPending = idx > currentStageIndex;
-            
+
             return (
               <div
                 key={s.id}
