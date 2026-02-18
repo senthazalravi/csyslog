@@ -17,6 +17,11 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ollama-api/, ""),
       },
+      "/nvidia-api": {
+        target: "https://integrate.api.nvidia.com/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/nvidia-api/, ""),
+      },
     },
   },
   plugins: [react()].filter(Boolean),

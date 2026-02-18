@@ -1,5 +1,5 @@
-import { 
-  FileText, Download, AlertTriangle, CheckCircle, 
+import {
+  FileText, Download, AlertTriangle, CheckCircle,
   Info, AlertCircle, TrendingUp, Lightbulb, Clock,
   FileJson, FileType
 } from "lucide-react";
@@ -185,6 +185,47 @@ export const AnalysisReport = ({ analysis, onExport }: AnalysisReportProps) => {
                     {rec}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Device Failures Table */}
+          {analysis.deviceFailures && analysis.deviceFailures.length > 0 && (
+            <div className="pt-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5 text-critical">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Device Failures
+              </h4>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="bg-secondary/50 border-b border-border">
+                      <th className="px-3 py-2 font-semibold text-muted-foreground">Device</th>
+                      <th className="px-3 py-2 font-semibold text-muted-foreground">Error</th>
+                      <th className="px-3 py-2 font-semibold text-muted-foreground">Timestamp</th>
+                      <th className="px-3 py-2 font-semibold text-muted-foreground">Severity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analysis.deviceFailures.map((failure, i) => (
+                      <tr key={i} className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors">
+                        <td className="px-3 py-2 font-medium text-foreground">{failure.device}</td>
+                        <td className="px-3 py-2 text-muted-foreground whitespace-pre-wrap">{failure.error}</td>
+                        <td className="px-3 py-2 text-muted-foreground font-mono">{failure.timestamp || "N/A"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          <span className={cn(
+                            "px-1.5 py-0.5 rounded-full text-[10px] uppercase font-bold",
+                            failure.severity === "critical" && "bg-critical/10 text-critical border border-critical/20",
+                            failure.severity === "warning" && "bg-warning/10 text-warning border border-warning/20",
+                            failure.severity === "info" && "bg-info/10 text-info border border-info/20"
+                          )}>
+                            {failure.severity}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

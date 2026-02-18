@@ -1,4 +1,4 @@
-import { AIProvider } from "@/types/ai-settings";
+import { AIProvider, DeviceFailure } from "@/types/ai-settings";
 
 export interface ConnectionTestResult {
   success: boolean;
@@ -21,8 +21,12 @@ export interface OllamaModelPullProgress {
 
 // Resolve Ollama base URL – use the Vite dev-server proxy to avoid CORS
 const getOllamaProxyUrl = (_provider: AIProvider): string => {
-  // The proxy is configured in vite.config.ts: /ollama-api -> http://localhost:11434
   return "/ollama-api";
+};
+
+// Resolve NVIDIA base URL – use the Vite dev-server proxy to avoid CORS
+const getNvidiaProxyUrl = (_provider: AIProvider): string => {
+  return "/nvidia-api";
 };
 
 // ─── Check whether a model is already available locally ──────────────────────
@@ -214,6 +218,38 @@ export const testConnection = async (
         };
       }
 
+      case "nvidia": {
+        const proxyUrl = getNvidiaProxyUrl(provider);
+        const model = provider.model || "moonshotai/kimi-k2.5";
+
+        onProgress?.({ status: "Testing NVIDIA API connection...", percent: -1 });
+
+        const response = await fetch(`${proxyUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${provider.apiKey}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: "user", content: "Ping" }],
+            max_tokens: 5
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`NVIDIA error: ${response.status} - ${error.slice(0, 100)}`);
+        }
+
+        return {
+          success: true,
+          message: "Connected to NVIDIA AI API",
+          latency: Date.now() - startTime,
+        };
+      }
+
       case "openai": {
         const response = await fetch("https://api.openai.com/v1/models", {
           method: "GET",
@@ -313,6 +349,7 @@ export const analyzeWithAI = async (
   severityBreakdown?: any;
   insights?: string[];
   recommendations?: string[];
+  deviceFailures?: DeviceFailure[];
   error?: string;
 }> => {
   const systemPrompt = `You are a security and systems log analyst. Analyze the provided log content and return a JSON object with:
@@ -338,6 +375,25 @@ Only return valid JSON, no markdown or explanations.`;
         headers = { "Content-Type": "application/json" };
         body = {
           model: provider.model || "gpt-oss:20b",
+          messages: [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: `Analyze this log:\n\n${truncatedContent}`,
+            },
+          ],
+          stream: false,
+        };
+        break;
+
+      case "nvidia":
+        apiUrl = `${getNvidiaProxyUrl(provider)}/chat/completions`;
+        headers = {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${provider.apiKey}`
+        };
+        body = {
+          model: provider.model || "moonshotai/kimi-k2.5",
           messages: [
             { role: "system", content: systemPrompt },
             {
@@ -394,6 +450,7 @@ Only return valid JSON, no markdown or explanations.`;
       severityBreakdown: parsed.severityBreakdown,
       insights: parsed.insights,
       recommendations: parsed.recommendations,
+      deviceFailures: parsed.deviceFailures,
     };
   } catch (error) {
     const message =
@@ -424,6 +481,7 @@ export const analyzeWithAIStreaming = async (
   severityBreakdown?: any;
   insights?: string[];
   recommendations?: string[];
+  deviceFailures?: DeviceFailure[];
   error?: string;
 }> => {
   if (provider.id !== "ollama") {
@@ -544,6 +602,7 @@ Only return valid JSON, no markdown or explanations.`;
       severityBreakdown: result.severityBreakdown,
       insights: result.insights,
       recommendations: result.recommendations,
+      deviceFailures: result.deviceFailures,
     };
   } catch (error) {
     const message =

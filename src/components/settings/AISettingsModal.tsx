@@ -16,6 +16,7 @@ interface AISettingsModalProps {
 }
 
 const providerIcons: Record<string, typeof Brain> = {
+  nvidia: Globe,
   openai: Zap,
   grok: Brain,
   deepseek: Globe,
@@ -107,7 +108,7 @@ export const AISettingsModal = ({ trigger }: AISettingsModalProps) => {
                       <div>
                         <h4 className="text-sm font-medium text-foreground">{provider.name}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {provider.id === "ollama" ? "Local models" : "Cloud API"}
+                          {provider.id === "ollama" ? "Local models" : provider.id === "nvidia" ? "NVIDIA API" : "Cloud API"}
                         </p>
                       </div>
                     </div>
