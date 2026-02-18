@@ -19,14 +19,20 @@ export interface OllamaModelPullProgress {
   totalBytes?: number;
 }
 
-// Resolve Ollama base URL – use the Vite dev-server proxy to avoid CORS
-const getOllamaProxyUrl = (_provider: AIProvider): string => {
-  return "/ollama-api";
+// Resolve Ollama base URL – use the Vite dev-server proxy in dev to avoid CORS
+const getOllamaProxyUrl = (provider: AIProvider): string => {
+  if (import.meta.env.DEV) {
+    return "/ollama-api";
+  }
+  return provider.baseUrl || "http://localhost:11434";
 };
 
-// Resolve NVIDIA base URL – use the Vite dev-server proxy to avoid CORS
-const getNvidiaProxyUrl = (_provider: AIProvider): string => {
-  return "/nvidia-api";
+// Resolve NVIDIA base URL – use the Vite dev-server proxy in dev to avoid CORS
+const getNvidiaProxyUrl = (provider: AIProvider): string => {
+  if (import.meta.env.DEV) {
+    return "/nvidia-api";
+  }
+  return provider.baseUrl || "https://integrate.api.nvidia.com/v1";
 };
 
 // ─── Check whether a model is already available locally ──────────────────────
