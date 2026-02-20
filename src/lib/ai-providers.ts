@@ -20,6 +20,7 @@ export interface OllamaModelPullProgress {
 }
 
 // Resolve Ollama base URL – use the Vite dev-server proxy in dev to avoid CORS
+// In production, Ollama is usually still local to the user, so we don't proxy it through the server.
 const getOllamaProxyUrl = (provider: AIProvider): string => {
   if (import.meta.env.DEV) {
     return "/ollama-api";
@@ -27,12 +28,10 @@ const getOllamaProxyUrl = (provider: AIProvider): string => {
   return provider.baseUrl || "http://localhost:11434";
 };
 
-// Resolve NVIDIA base URL – use the Vite dev-server proxy in dev to avoid CORS
-const getNvidiaProxyUrl = (provider: AIProvider): string => {
-  if (import.meta.env.DEV) {
-    return "/nvidia-api";
-  }
-  return provider.baseUrl || "https://integrate.api.nvidia.com/v1";
+// Resolve Cloud API base URL – use the Vite dev-server proxy / Netlify redirects
+const getCloudProxyUrl = (providerId: string): string => {
+  // Always use the relative proxy path to bypass CORS via Vite (dev) or Netlify (prod)
+  return `/${providerId}-api`;
 };
 
 // ─── Check whether a model is already available locally ──────────────────────
@@ -225,7 +224,7 @@ export const testConnection = async (
       }
 
       case "nvidia": {
-        const proxyUrl = getNvidiaProxyUrl(provider);
+        const proxyUrl = getCloudProxyUrl(provider.id);
         const model = provider.model || "moonshotai/kimi-k2.5";
 
         onProgress?.({ status: "Testing NVIDIA API connection...", percent: -1 });
@@ -264,7 +263,8 @@ export const testConnection = async (
       }
 
       case "openai": {
-        const response = await fetch("https://api.openai.com/v1/models", {
+        const proxyUrl = getCloudProxyUrl(provider.id);
+        const response = await fetch(`${proxyUrl}/models`, {
           method: "GET",
           headers: { Authorization: `Bearer ${provider.apiKey}` },
           signal: AbortSignal.timeout(10000),
@@ -283,7 +283,8 @@ export const testConnection = async (
       }
 
       case "grok": {
-        const response = await fetch("https://api.x.ai/v1/models", {
+        const proxyUrl = getCloudProxyUrl(provider.id);
+        const response = await fetch(`${proxyUrl}/models`, {
           method: "GET",
           headers: { Authorization: `Bearer ${provider.apiKey}` },
           signal: AbortSignal.timeout(10000),
@@ -302,8 +303,8 @@ export const testConnection = async (
       }
 
       case "deepseek": {
-        const baseUrl = provider.baseUrl || "https://api.deepseek.com";
-        const response = await fetch(`${baseUrl}/models`, {
+        const proxyUrl = getCloudProxyUrl(provider.id);
+        const response = await fetch(`${proxyUrl}/models`, {
           method: "GET",
           headers: { Authorization: `Bearer ${provider.apiKey}` },
           signal: AbortSignal.timeout(10000),
@@ -344,7 +345,7 @@ export const testConnection = async (
       return {
         success: false,
         message:
-          "Network error. CORS may be blocking the request – cloud APIs require a backend proxy.",
+          `Network error reaching ${provider.name}. CORS may be blocking the request – all cloud APIs require a backend proxy (proxied via ${getCloudProxyUrl(provider.id)}).`,
       };
     }
 
@@ -406,13 +407,16 @@ Only return valid JSON, no markdown or explanations.`;
         break;
 
       case "nvidia":
-        apiUrl = `${getNvidiaProxyUrl(provider)}/chat/completions`;
+      case "openai":
+      case "grok":
+      case "deepseek":
+        apiUrl = `${getCloudProxyUrl(provider.id)}/chat/completions`;
         headers = {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${provider.apiKey}`
         };
         body = {
-          model: provider.model || "moonshotai/kimi-k2.5",
+          model: provider.model || (provider.id === "nvidia" ? "moonshotai/kimi-k2.5" : "gpt-3.5-turbo"),
           messages: [
             { role: "system", content: systemPrompt },
             {
@@ -423,13 +427,6 @@ Only return valid JSON, no markdown or explanations.`;
           stream: false,
         };
         break;
-
-      case "openai":
-      case "grok":
-      case "deepseek":
-        return {
-          error: `${provider.name} cannot be called directly from the browser due to CORS restrictions. Please use Ollama for local analysis.`,
-        };
 
       default:
         return { error: "Unknown provider" };
@@ -483,9 +480,13 @@ Only return valid JSON, no markdown or explanations.`;
       message.includes("Failed to fetch") ||
       message.includes("NetworkError")
     ) {
+      if (provider.id === "ollama") {
+        return {
+          error: "Cannot reach Ollama. Make sure it's running at http://localhost:11434",
+        };
+      }
       return {
-        error:
-          "Cannot reach Ollama. Make sure it's running at http://localhost:11434",
+        error: `Network error reaching ${provider.name} AI. CORS is bypasses via proxy ${getCloudProxyUrl(provider.id)}, but the request failed. Check your internet or API key.`,
       };
     }
 

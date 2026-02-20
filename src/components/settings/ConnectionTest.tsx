@@ -151,14 +151,13 @@ export const ConnectionTest = ({ provider }: ConnectionTestProps) => {
                 <div className="mt-2 p-2 rounded bg-secondary/50 border border-border">
                   <p className="text-[10px] font-bold text-foreground mb-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 text-warning" />
-                    {result.message.includes("Deployment") ? "DEPLOYMENT TROUBLESHOOTING:" : "TROUBLESHOOTING TIP:"}
+                    TROUBLESHOOTING TIP:
                   </p>
                   <p className="text-[10px] text-muted-foreground italic leading-normal">
-                    {result.message.includes("Deployment")
-                      ? "Vite proxies don't work in production. You must configure 'Rewrites' in your hosting dashboard (Vercel/Netlify) to map '/nvidia-api' to the official NVIDIA endpoint."
-                      : result.message.includes("NVIDIA")
-                        ? "Check your VITE_NVIDIA_API_KEY in .env and ensure the Vite dev server was restarted."
-                        : "The local proxy might be blocked. Ensure Vite server is running and check your browser's console for CORS errors."}
+                    {import.meta.env.DEV
+                      ? "LOCAL DEV: Ensure the Vite server is running. If fetching fails, check your Vite proxy settings in vite.config.ts and restart the dev server."
+                      : "PRODUCTION: All cloud APIs are proxied via server-side redirects (Netlify/Vercel). If this check fails, ensure your hosting environment has the correct redirect rules configured."}
+                    {provider.id !== "ollama" && " Also verify your API key is correct for " + provider.name + "."}
                   </p>
                 </div>
               )}

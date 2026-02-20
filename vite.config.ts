@@ -22,6 +22,21 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/nvidia-api/, ""),
       },
+      "/openai-api": {
+        target: "https://api.openai.com/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/openai-api/, ""),
+      },
+      "/grok-api": {
+        target: "https://api.x.ai/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/grok-api/, ""),
+      },
+      "/deepseek-api": {
+        target: "https://api.deepseek.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/deepseek-api/, ""),
+      },
     },
   },
   plugins: [react()].filter(Boolean),

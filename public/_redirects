@@ -1,0 +1,5 @@
+# Netlify Redirects for API Proxying
+/nvidia-api/*    https://integrate.api.nvidia.com/v1/:splat    200
+/openai-api/*    https://api.openai.com/v1/:splat           200
+/grok-api/*      https://api.x.ai/v1/:splat                 200
+/deepseek-api/*  https://api.deepseek.com/:splat            200
